@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/beevik/etree"
@@ -16,7 +15,7 @@ const (
 	trackingEventsTag         = "TrackingEvents"
 	trackingEventsTagOpenTag  = "<" + trackingEventsTag + ">"
 	trackingEventsTagCloseTag = "</" + trackingEventsTag + ">"
-	SampleTrackingEvent       = "<Tracking event=\"shriprasad\"><![CDATA[https://mytracker.com]]></Tracking>"
+	SampleTrackingEvent       = "<Tracking event=\"close\"><![CDATA[https://mytracker.com]]></Tracking>"
 	linearEndTag              = "</Linear>"
 	nonLinearEndTag           = "</NonLinearAds>"
 	trackerUrl                = "https://mytracker.com"
@@ -86,11 +85,11 @@ func etreeBased(vast string) (string, error) {
 		panic(err)
 	}
 
-	for i, ele := range doc.FindElements("VAST/Ad/InLine/Creatives/Creative") {
+	for _, ele := range doc.FindElements("VAST/Ad/InLine/Creatives/Creative") {
 		trackEle := ele.FindElement("Linear/" + trackingEventsTag)
 		if trackEle != nil {
 			newEle := doc.CreateElement("Tracking")
-			newEle.CreateAttr("event", "shriprasad_"+strconv.Itoa(i))
+			newEle.CreateAttr("event", "close")
 			newEle.SetCData(trackerUrl)
 			trackEle.AddChild(newEle)
 		}
@@ -98,7 +97,7 @@ func etreeBased(vast string) (string, error) {
 		trackEle = ele.FindElement("NonLinearAds/" + trackingEventsTag)
 		if trackEle != nil {
 			newEle := doc.CreateElement("Tracking")
-			newEle.CreateAttr("event", "shriprasad_"+strconv.Itoa(i))
+			newEle.CreateAttr("event", "close")
 			newEle.SetCData(trackerUrl)
 			trackEle.AddChild(newEle)
 		}
@@ -143,7 +142,7 @@ func xmlEncodingBased(vast string) (string, error) {
 					Attr: []xml.Attr{
 						{
 							Name:  xml.Name{Local: "event"},
-							Value: "shriprasad",
+							Value: "close",
 						},
 					},
 				}
@@ -268,24 +267,24 @@ var vast string = `
           </Linear>
           <UniversalAdId idRegistry="Ad-ID">8465</UniversalAdId>
         </Creative>
-		<Creative id="5480" sequence="1" adId="2447226">
-		  <UniversalAdId idRegistry="Ad-ID" idValue="8465">8465</UniversalAdId>
-		  <NonLinearAds>
-		    <NonLinear>
-		    <StaticResource creativeType="image/png">
-		    <![CDATA[http://mms.businesswire.com/media/20150623005446/en/473787/21/iab_tech_lab.jpg]]>
-		    </StaticResource>
-		    <NonLinearClickThrough>
-		    <![CDATA[http://iabtechlab.com]]>
-		    </NonLinearClickThrough>
-		    <NonLinearClickTracking>
-		    <![CDATA[http://example.com/trackingurl/clickTracking]]>
-		    </NonLinearClickTracking>
-		   </NonLinear>
-		   <TrackingEvents>
-	  	   </TrackingEvents>
-	  	  </NonLinearAds>
-		</Creative>
+        <Creative id="5480" sequence="1" adId="2447226">
+          <NonLinearAds>
+            <NonLinear width="350" height="350">
+              <StaticResource creativeType="image/png">
+                <![CDATA[https://mms.businesswire.com/media/20150623005446/en/473787/21/iab_tech_lab.jpg]]>
+              </StaticResource>
+              <NonLinearClickThrough>
+               <![CDATA[https://iabtechlab.com]]>
+              </NonLinearClickThrough>
+              <NonLinearClickTracking>
+               <![CDATA[https://example.com/tracking/clickTracking]]>
+              </NonLinearClickTracking>
+            </NonLinear>
+            <TrackingEvents>
+            </TrackingEvents>
+           </NonLinearAds>
+           <UniversalAdId idRegistry="Ad-ID">8465</UniversalAdId>
+        </Creative>
       </Creatives>
     </InLine>
   </Ad>
