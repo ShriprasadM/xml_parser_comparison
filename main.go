@@ -19,65 +19,78 @@ const (
 	linearEndTag              = "</Linear>"
 	nonLinearEndTag           = "</NonLinearAds>"
 	trackerUrl                = "https://mytracker.com"
+
+	TrackingEvent = "<Tracking event=\"%s\"><![CDATA[%s]]></Tracking>"
 )
 
-// func stringBased(vast string) (string, error) {
-// 	ci := strings.Index(vast, trackingEventsTagCloseTag)
+type VastModifier struct {
+	vast string
+}
 
-// 	// no impression tag - pass it as it is
-// 	if ci == -1 {
-// 		// return vast, nil
-// 		// append tracking event
-// 		// oi := strings.Index(vast, trackingEventsTagOpenTag)
+func (v *VastModifier) SetVast(vast string) {
+	v.vast = vast
+}
 
-// 		oi := strings.Index(vast, linearEndTag)
-
-// 		// if ci-oi == len(trackingEventsTagOpenTag) {
-// 		if oi != -1 {
-// 			return strings.Replace(vast, linearEndTag, trackingEventsTagOpenTag+SampleTrackingEvent+trackingEventsTagCloseTag+linearEndTag, 1), nil
-// 		}
-// 		return vast, nil // single replacement
-// 	}
-
-// 	return strings.Replace(vast, trackingEventsTagCloseTag, SampleTrackingEvent+trackingEventsTagCloseTag, 1), nil
-// }
-
-func stringBased(vast string) string {
-
-	list := strings.SplitAfter(vast, "/Creative>")
+func (v *VastModifier) InjectTrackerEvent(event, trackerUrl string) {
+	trackingEvent := fmt.Sprintf(TrackingEvent, event, trackerUrl)
+	list := strings.SplitAfter(v.vast, "/Creative>")
 
 	for i, cr := range list {
 		ci := strings.Index(cr, trackingEventsTagCloseTag)
 
-		// // no impression tag - pass it as it is
 		if ci == -1 {
-			// 	// return vast, nil
-			// 	// append tracking event
-			// 	// oi := strings.Index(vast, trackingEventsTagOpenTag)
-
-			// 	oi := strings.Index(cr, linearEndTag)
-
-			// 	// if ci-oi == len(trackingEventsTagOpenTag) {
-			// 	if oi != -1 {
-			// 		list[i] = strings.Replace(cr, linearEndTag, trackingEventsTagOpenTag+SampleTrackingEvent+trackingEventsTagCloseTag+linearEndTag, 1)
-			// 	}
-			// }
 
 			li := strings.Index(cr, linearEndTag)
 			if li != -1 {
-				list[i] = strings.Replace(cr, linearEndTag, trackingEventsTagOpenTag+SampleTrackingEvent+trackingEventsTagCloseTag+linearEndTag, 1)
+				list[i] = strings.Replace(cr, linearEndTag, trackingEventsTagOpenTag+trackingEvent+trackingEventsTagCloseTag+linearEndTag, 1)
 			}
 
 			nli := strings.Index(cr, nonLinearEndTag)
 			if nli != -1 {
-				list[i] = strings.Replace(cr, nonLinearEndTag, trackingEventsTagOpenTag+SampleTrackingEvent+trackingEventsTagCloseTag+nonLinearEndTag, 1)
+				list[i] = strings.Replace(cr, nonLinearEndTag, trackingEventsTagOpenTag+trackingEvent+trackingEventsTagCloseTag+nonLinearEndTag, 1)
 			}
 		}
-		list[i] = strings.Replace(cr, trackingEventsTagCloseTag, SampleTrackingEvent+trackingEventsTagCloseTag, 1)
+		list[i] = strings.Replace(cr, trackingEventsTagCloseTag, trackingEvent+trackingEventsTagCloseTag, 1)
 	}
 
-	return strings.Join(list, "")
+	v.vast = strings.Join(list, "")
 }
+
+func (v *VastModifier) ToString() string {
+	return v.vast
+}
+
+func stringBased(vast string) string {
+	vm := VastModifier{}
+	vm.SetVast(vast)
+	vm.InjectTrackerEvent("close", "https://mytracker.com")
+	return vm.ToString()
+}
+
+// func stringBased(vast string) string {
+
+// 	list := strings.SplitAfter(vast, "/Creative>")
+
+// 	for i, cr := range list {
+// 		ci := strings.Index(cr, trackingEventsTagCloseTag)
+
+// 		if ci == -1 {
+
+// 			li := strings.Index(cr, linearEndTag)
+// 			if li != -1 {
+// 				list[i] = strings.Replace(cr, linearEndTag, trackingEventsTagOpenTag+SampleTrackingEvent+trackingEventsTagCloseTag+linearEndTag, 1)
+// 			}
+
+// 			nli := strings.Index(cr, nonLinearEndTag)
+// 			if nli != -1 {
+// 				list[i] = strings.Replace(cr, nonLinearEndTag, trackingEventsTagOpenTag+SampleTrackingEvent+trackingEventsTagCloseTag+nonLinearEndTag, 1)
+// 			}
+// 		}
+// 		list[i] = strings.Replace(cr, trackingEventsTagCloseTag, SampleTrackingEvent+trackingEventsTagCloseTag, 1)
+// 	}
+
+// 	return strings.Join(list, "")
+// }
 
 func etreeBased(vast string) (string, error) {
 	doc := etree.NewDocument()
@@ -189,8 +202,9 @@ func xmlEncodingBased(vast string) (string, error) {
 }
 
 func main() {
-	vast := stringBased(vast)
+	// vast := stringBased(vast)
 	//vast, _ := xmlEncodingBased(vast)
+	vast, _ := etreeBased(vast)
 	fmt.Println(vast)
 }
 
