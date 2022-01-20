@@ -16,3 +16,10 @@ PASS
 coverage: 83.3% of statements
 ok  	xml_parser_comparison	5.309s
 ```
+---
+
+|  APPROACH| PROS  | CONS  |
+|--|--|--|
+|  ETREE| 1) Easier to use and add multiple Tracking events. | 1) Expensive as it builds a entire tree of nodes and we do partial replacement.<BR> 2) Uses golang -encoding/xml library internally whose performance itself is not good (for our use case), so the overall performance is not good.|
+| String Replace  | 1) Fastest out of all approaches.| 1) As strings in golang are immutable, each string replacement will create new string.|
+|XML Encoding   | 1) Use standard golang - encoding/xml library.  | 1) Need to copy xml tokens for each  Event Tag, so uses more space.|
